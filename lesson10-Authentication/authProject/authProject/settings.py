@@ -122,6 +122,8 @@ STATICFILESDIRS = (
     os.path.join(BASE_DIR, 'static')
 )
 
+TEMPLATES[0]["DIRS"] = [os.path.join(BASE_DIR, "templates")]
+
 # Redirect to the home page after login
 LOGIN_REDIRECT_URL = 'home'
 
