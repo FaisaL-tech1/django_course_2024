@@ -11,7 +11,7 @@ from django.views import View
 #  Import the User class (model)
 from django.contrib.auth.models import User
 # Import the RegisterForm from forms.py
-from .forms import RegisterForm
+from .forms import RegisterForm, LoginForm
 
 def register_view(request):
     if request.method == "POST":
@@ -29,17 +29,22 @@ def register_view(request):
 
 def login_view(request):
     error_message = None 
-    if request.method == "POST":  
-        username = request.POST.get("username")  
-        password = request.POST.get("password")  
-        user = authenticate(request, username=username, password=password)  
-        if user is not None:  
-            login(request, user)  
-            next_url = request.POST.get('next') or request.GET.get('next') or 'home'  
-            return redirect(next_url) 
-        else:
-            error_message = "Invalid credentials"  
-    return render(request, 'accounts/login.html', {'error': error_message})
+    next_url = request.GET.get('next', '')
+    if request.method == "POST": 
+        form = LoginForm(request.POST)
+        next_url = request.POST.get('next') or 'home'
+        if form.is_valid():
+            username = form.cleaned_data.get("username")
+            password = form.cleaned_data.get("password") 
+            user = authenticate(request, username=username, password=password)  
+            if user is not None:  
+                login(request, user)  
+                return redirect(next_url) 
+            else:
+                error_message = "Invalid credentials"  
+    else:
+        form = LoginForm()
+    return render(request, 'accounts/login.html', {'form':form, 'error': error_message, 'next': next_url})
 
     
 def logout_view(request):
@@ -57,18 +62,6 @@ def home_view(request):
 
 # Protected View 
 class ProtectedView(LoginRequiredMixin, View):
-    login_url = '/login/'
-    # 'next' - to redirect URL
-    redirect_field_name = 'redirect_to'
     
     def get(self, request):
         return render(request, 'registration/protected.html')
-    
-
-
-
-
-
-
-
-

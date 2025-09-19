@@ -123,6 +123,7 @@ STATICFILESDIRS = (
 )
 
 # Redirect to the home page after login
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = 'home'
 
 # Default primary key field type
