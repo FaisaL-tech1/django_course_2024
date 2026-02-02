@@ -53,6 +53,63 @@ myproject/
 │   └── wsgi.py
 ```
 
+### Code Examples
+
+#### Creating Views (myapp/views.py)
+The view is a Python function that receives a web request and returns a web response:
+
+```python
+from django.shortcuts import render
+from django.http import HttpResponse
+
+# Simple view that returns plain text
+def hello_world(request):
+    return HttpResponse("Hello, World! Welcome to Django.")
+
+# View that receives URL parameters
+def greet_user(request, name):
+    return HttpResponse(f"Hello, {name}!")
+```
+
+#### URL Routing (myapp/urls.py)
+Maps URLs to view functions using URL patterns:
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.hello_world, name='hello'),
+    path('greet/<str:name>/', views.greet_user, name='greet'),
+]
+```
+
+#### Project URL Configuration (myproject/urls.py)
+The main project URL file includes app URLs:
+
+```python
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('myapp.urls')),  # Include app URLs
+]
+```
+
+### Request/Response Cycle
+1. User visits a URL: `http://localhost:8000/hello/`
+2. Django matches URL to pattern in `urls.py`
+3. View function is called with the request object
+4. View returns an `HttpResponse`
+5. Response is sent back to the browser
+
+### Running the Application
+```bash
+python manage.py runserver
+# Visit http://localhost:8000/ in your browser
+```
+
 ---
 
 ## Lesson 2: Django Setup and Configuration
@@ -84,6 +141,125 @@ This lesson dives deeper into Django's configuration and setup process. It teach
 - Reading and modifying `settings.py`
 - Understanding the request/response cycle
 
+### Code Example: Settings Configuration (myproject/settings.py)
+
+```python
+"""
+Django settings for myproject project.
+"""
+
+from pathlib import Path
+
+# Build paths inside the project
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-l#lav=+grjqg=vx2tx3ozn)m2voe#l#4fgw9ak)2e5^%enx5k2'
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+
+ALLOWED_HOSTS = []
+
+# Application definition
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    # Your apps go here
+    # 'myapp',
+]
+
+# Middleware processes every request/response
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'myproject.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],  # Add paths to templates directories here
+        'APP_DIRS': True,  # Look for templates in app directories
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'myproject.wsgi.application'
+
+# Database Configuration
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+# Password validation
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = '/static/'
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+```
+
+### Setup Commands
+
+```bash
+# Create virtual environment
+pipenv install
+
+# Activate virtual environment
+pipenv shell
+
+# Install Django
+pip install django
+
+# Create project
+django-admin startproject myproject
+
+# Create app
+python manage.py startapp myapp
+
+# Apply migrations
+python manage.py migrate
+
+# Run development server
+python manage.py runserver
+```
+
 ---
 
 ## Lesson 3: Creating a Django App
@@ -107,8 +283,92 @@ This lesson focuses on creating functional Django applications with database mod
 - Django ORM basics
 - Admin model registration
 
-### Example Models
-The lesson includes a `Tour` model with fields like name, description, price, duration, and destination.
+### Code Example: Tour Model (asiatoursagency/models.py)
+
+```python
+from django.db import models
+
+class Tour(models.Model):
+    """Model representing a tour package"""
+    # CharField for text fields with maximum length
+    origin_country = models.CharField(max_length=64)
+    destination_country = models.CharField(max_length=64)
+    
+    # IntegerField for numeric values
+    number_of_nights = models.IntegerField()
+    price = models.IntegerField()
+    
+    # String representation of the object
+    def __str__(self):
+        return (f"ID:{self.id}: From {self.origin_country} To {self.destination_country}, "
+                f"{self.number_of_nights} nights costs ${self.price}")
+    
+    class Meta:
+        ordering = ['price']  # Orders tours by price
+        verbose_name_plural = "Tours"
+```
+
+### Admin Registration (asiatoursagency/admin.py)
+
+```python
+from django.contrib import admin
+from .models import Tour
+
+# Register the Tour model with Django admin
+admin.site.register(Tour)
+```
+
+### Common Model Field Types
+
+```python
+from django.db import models
+
+class ExampleModel(models.Model):
+    # Text fields
+    name = models.CharField(max_length=100)  # Short strings
+    description = models.TextField()  # Long text
+    
+    # Numeric fields
+    age = models.IntegerField()  # Whole numbers
+    price = models.FloatField()  # Decimal numbers
+    
+    # Date/Time fields
+    created_at = models.DateTimeField(auto_now_add=True)  # Auto-set on creation
+    updated_at = models.DateTimeField(auto_now=True)  # Auto-update on save
+    birth_date = models.DateField()
+    
+    # Boolean field
+    is_active = models.BooleanField(default=True)
+    
+    # Choice field
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+    ]
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    
+    # Foreign Key (relationship to another model)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+```
+
+### Creating and Migrating Models
+
+```bash
+# Create model in models.py, then:
+
+# Create migration file
+python manage.py makemigrations
+
+# Apply migration to database
+python manage.py migrate
+
+# View migrations
+python manage.py showmigrations
+
+# Rollback migration
+python manage.py migrate asiatoursagency 0001
+```
 
 ---
 
@@ -196,26 +456,141 @@ Templates are essential for displaying data to users. This lesson covers:
 - Rendering templates with `render()`
 - Template loaders
 
-### Example View
+### Code Example: View with Context (asiatoursagency/views.py)
+
 ```python
+from django.shortcuts import render
+from .models import Tour
+
 def index(request):
+    """Display all available tours"""
+    # Query all tours from database
     tours = Tour.objects.all()
+    
+    # Prepare context data to pass to template
     context = {'tours': tours}
+    
+    # Render template with context
     return render(request, 'tours/index.html', context)
+
+def tour_detail(request, tour_id):
+    """Display details of a specific tour"""
+    tour = Tour.objects.get(id=tour_id)
+    context = {'tour': tour}
+    return render(request, 'tours/detail.html', context)
 ```
 
-### Example Template
+### URL Routing (asiatoursagency/urls.py)
+
+```python
+from django.urls import path
+from . import views
+
+# Define URL patterns
+urlpatterns = [
+    path('', views.index, name='tour_list'),
+    path('tour/<int:tour_id>/', views.tour_detail, name='tour_detail'),
+]
+```
+
+### Example Template: Base Template (templates/base.html)
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Tours{% endblock %}</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .navbar { background-color: #333; padding: 10px; }
+        .navbar a { color: white; text-decoration: none; margin: 10px; }
+    </style>
+</head>
+<body>
+    <!-- Navigation bar -->
+    <div class="navbar">
+        <a href="{% url 'tour_list' %}">Home</a>
+        <a href="{% url 'about' %}">About</a>
+        <a href="{% url 'contact' %}">Contact</a>
+    </div>
+    
+    <!-- Main content block that child templates override -->
+    <div class="container">
+        {% block content %}
+        <p>Default content goes here</p>
+        {% endblock %}
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 World Tour Agency. All rights reserved.</p>
+    </footer>
+</body>
+</html>
+```
+
+### Example Template: Child Template (templates/tours/index.html)
+
 ```html
 {% extends 'base.html' %}
+
+{% block title %}Available Tours{% endblock %}
+
 {% block content %}
     <h1>Available Tours</h1>
-    {% for tour in tours %}
-        <div class="tour">
-            <h2>{{ tour.name }}</h2>
-            <p>Price: ${{ tour.price }}</p>
+    
+    <!-- Loop through tours -->
+    {% if tours %}
+        <div class="tours-list">
+            {% for tour in tours %}
+                <div class="tour-card">
+                    <h2>{{ tour.origin_country }} to {{ tour.destination_country }}</h2>
+                    
+                    <!-- Display tour details -->
+                    <p><strong>Nights:</strong> {{ tour.number_of_nights }} nights</p>
+                    <p><strong>Price:</strong> ${{ tour.price }}</p>
+                    
+                    <!-- Link to tour detail page -->
+                    <a href="{% url 'tour_detail' tour.id %}">View Details</a>
+                </div>
+            {% endfor %}
         </div>
-    {% endfor %}
+    {% else %}
+        <p>No tours available at this time.</p>
+    {% endif %}
 {% endblock %}
+```
+
+### Template Tags and Filters
+
+```html
+<!-- Variables -->
+{{ variable_name }}
+
+<!-- Conditional statements -->
+{% if condition %}
+    <p>This shows if condition is true</p>
+{% elif other_condition %}
+    <p>This shows if other_condition is true</p>
+{% else %}
+    <p>This shows if no conditions are true</p>
+{% endif %}
+
+<!-- Loops -->
+{% for item in items %}
+    <p>{{ item.name }}</p>
+{% empty %}
+    <p>No items available</p>
+{% endfor %}
+
+<!-- Filters (formatting) -->
+{{ price|floatformat:2 }}  <!-- Format to 2 decimal places -->
+{{ date|date:"Y-m-d" }}  <!-- Format date -->
+{{ text|upper }}  <!-- Convert to uppercase -->
+{{ text|truncatewords:10 }}  <!-- Truncate to 10 words -->
+
+<!-- Template comments -->
+{# This comment won't appear in HTML #}
 ```
 
 ---
@@ -244,15 +619,115 @@ Django's built-in admin interface is powerful for managing application data. Thi
 - User permissions and groups
 - Admin authentication
 
-### Example Admin Configuration
+### Code Example: Basic Admin Registration (asiatoursagency/admin.py)
+
+```python
+from django.contrib import admin
+from .models import Tour
+
+# Simple registration - uses default admin interface
+admin.site.register(Tour)
+```
+
+### Code Example: Customized Admin (asiatoursagency/admin.py)
+
 ```python
 from django.contrib import admin
 from .models import Tour
 
 class TourAdmin(admin.ModelAdmin):
-    list_display = ['name', 'price', 'duration']
-    search_fields = ['name', 'destination']
-    list_filter = ['price', 'duration']
+    """Customized admin interface for Tour model"""
+    
+    # Fields to display in list view
+    list_display = ['id', 'origin_country', 'destination_country', 'number_of_nights', 'price']
+    
+    # Fields to filter by in sidebar
+    list_filter = ['price', 'number_of_nights']
+    
+    # Fields to search by
+    search_fields = ['origin_country', 'destination_country']
+    
+    # Fields to display in edit form
+    fields = ['origin_country', 'destination_country', 'number_of_nights', 'price']
+    
+    # Read-only fields
+    readonly_fields = ['id']
+    
+    # Group fields in edit form
+    fieldsets = (
+        ('Tour Information', {
+            'fields': ('origin_country', 'destination_country')
+        }),
+        ('Details', {
+            'fields': ('number_of_nights', 'price')
+        }),
+    )
+    
+    # Custom action
+    def make_expensive(self, request, queryset):
+        """Mark selected tours as expensive (double price)"""
+        queryset.update(price=models.F('price') * 2)
+    make_expensive.short_description = "Double price of selected tours"
+    
+    actions = [make_expensive]
+
+# Register with customization
+admin.site.register(Tour, TourAdmin)
+```
+
+### Creating a Superuser
+
+```bash
+# Create superuser account
+python manage.py createsuperuser
+
+# You'll be prompted for:
+# Username: admin
+# Email: admin@example.com
+# Password: ****
+```
+
+### Accessing Admin
+
+1. Run development server: `python manage.py runserver`
+2. Visit: `http://localhost:8000/admin/`
+3. Login with superuser credentials
+4. Manage your models through the interface
+
+### Advanced Admin Features
+
+```python
+from django.contrib import admin
+from django.utils.html import format_html
+from .models import Tour
+
+class TourAdmin(admin.ModelAdmin):
+    # Display colored price based on value
+    def colored_price(self, obj):
+        if obj.price > 5000:
+            color = 'red'
+        elif obj.price > 2000:
+            color = 'orange'
+        else:
+            color = 'green'
+        return format_html(
+            '<span style="color: {};">${}</span>',
+            color,
+            obj.price
+        )
+    colored_price.short_description = 'Price'
+    
+    # Method to get tour summary
+    def tour_summary(self, obj):
+        return f"{obj.origin_country} → {obj.destination_country} ({obj.number_of_nights}n)"
+    tour_summary.short_description = 'Tour'
+    
+    list_display = ['tour_summary', 'colored_price', 'number_of_nights']
+    
+    # Show related tours count
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.prefetch_related('bookings')
 
 admin.site.register(Tour, TourAdmin)
 ```
@@ -321,27 +796,224 @@ Forms are crucial for user input handling. This lesson teaches form creation and
 - Form processing in views
 - Form rendering in templates
 
-### Example Form
+### Code Example: Basic Form (form_app/views.py)
+
+```python
+from django.shortcuts import render, redirect
+from .form import ContactForm
+
+# Home page view
+def home_view(request):
+    return render(request, 'form_app/home.html')
+
+# Contact form view
+def contact_view(request):
+    """Handle contact form submission"""
+    if request.method == "POST":
+        # Process form submission
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            # Form data is valid, send email
+            form.send_email()
+            return redirect('contact-success')
+    else:
+        # Display empty form
+        form = ContactForm()
+    
+    # Pass form to template
+    context = {'form': form}
+    return render(request, 'form_app/contact.html', context)
+
+# Success page
+def contact_success_view(request):
+    return render(request, 'form_app/contact_success.html')
+```
+
+### Code Example: Custom Form Class
+
+```python
+from django import forms
+from django.core.mail import send_mail
+
+class ContactForm(forms.Form):
+    """Custom form for contact messages"""
+    name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Your Name',
+            'class': 'form-control'
+        })
+    )
+    
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'placeholder': 'Your Email',
+            'class': 'form-control'
+        })
+    )
+    
+    subject = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Subject',
+            'class': 'form-control'
+        })
+    )
+    
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'placeholder': 'Your Message',
+            'class': 'form-control',
+            'rows': 5
+        })
+    )
+    
+    # Custom validation
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not email.endswith('.com'):
+            raise forms.ValidationError("Email must be a .com address")
+        return email
+    
+    # Send email method
+    def send_email(self):
+        cleaned_data = self.cleaned_data
+        send_mail(
+            subject=cleaned_data.get('subject'),
+            message=cleaned_data.get('message'),
+            from_email=cleaned_data.get('email'),
+            recipient_list=['admin@example.com'],
+            fail_silently=False,
+        )
+```
+
+### Form Template Rendering (form_app/contact.html)
+
+```html
+{% extends 'base.html' %}
+
+{% block title %}Contact Us{% endblock %}
+
+{% block content %}
+    <h1>Contact Us</h1>
+    
+    <form method="POST" action="{% url 'contact' %}">
+        <!-- CSRF token for security -->
+        {% csrf_token %}
+        
+        <!-- Display form fields -->
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                
+                <!-- Display field errors -->
+                {% if field.errors %}
+                    <div class="error">
+                        {% for error in field.errors %}
+                            <p style="color: red;">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+            <div class="error">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        
+        <button type="submit" class="btn btn-primary">Send Message</button>
+    </form>
+{% endblock %}
+```
+
+### Model Form Example
+
+```python
+from django import forms
+from .models import Product
+
+class ProductForm(forms.ModelForm):
+    """Form auto-generated from Product model"""
+    
+    class Meta:
+        model = Product
+        fields = '__all__'  # Include all fields
+        
+        # Custom labels for fields
+        labels = {
+            'product_id': 'Product ID',
+            'name': 'Product Name',
+            'sku': 'SKU Code',
+            'price': 'Price ($)',
+            'quantity': 'In Stock',
+            'supplier': 'Supplier Name',
+        }
+        
+        # Customize form widgets
+        widgets = {
+            'product_id': forms.NumberInput(
+                attrs={'placeholder': 'e.g. 1', 'class': 'form-control'}
+            ),
+            'name': forms.TextInput(
+                attrs={'placeholder': 'e.g. shirt', 'class': 'form-control'}
+            ),
+            'sku': forms.TextInput(
+                attrs={'placeholder': 'e.g. S12345', 'class': 'form-control'}
+            ),
+            'price': forms.NumberInput(
+                attrs={'placeholder': 'e.g. 19.99', 'class': 'form-control'}
+            ),
+            'quantity': forms.NumberInput(
+                attrs={'placeholder': 'e.g. 10', 'class': 'form-control'}
+            ),
+            'supplier': forms.TextInput(
+                attrs={'placeholder': 'e.g. ABC Corp', 'class': 'form-control'}
+            ),
+        }
+```
+
+### Form Field Types
+
 ```python
 from django import forms
 
-class TourForm(forms.ModelForm):
-    class Meta:
-        model = Tour
-        fields = ['name', 'price', 'duration', 'destination']
-```
-
-### Form Processing
-```python
-def create_tour(request):
-    if request.method == 'POST':
-        form = TourForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('tour_list')
-    else:
-        form = TourForm()
-    return render(request, 'create_tour.html', {'form': form})
+class RegistrationForm(forms.Form):
+    # Text fields
+    username = forms.CharField(max_length=150)
+    email = forms.EmailField()
+    
+    # Password fields (hidden input)
+    password = forms.CharField(widget=forms.PasswordInput)
+    
+    # Choice fields
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+    ]
+    gender = forms.ChoiceField(choices=GENDER_CHOICES)
+    
+    # Multiple choice
+    interests = forms.MultipleChoiceField(
+        choices=[
+            ('sports', 'Sports'),
+            ('music', 'Music'),
+            ('reading', 'Reading'),
+        ]
+    )
+    
+    # Boolean field (checkbox)
+    agree_terms = forms.BooleanField(required=True)
+    
+    # Date field
+    birth_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    
+    # Number field
+    age = forms.IntegerField(min_value=18, max_value=100)
 ```
 
 ---
@@ -375,24 +1047,229 @@ User authentication and authorization are fundamental to web applications. This 
 - Session management
 - Custom authentication backends
 
-### Example Authentication Views
+### Code Example: Registration Form (authApp/forms.py)
+
 ```python
+from django import forms
+from django.contrib.auth.models import User
+
+class RegisterForm(forms.ModelForm):
+    """Form for user registration with password confirmation"""
+    
+    # Password field with hidden input
+    password = forms.CharField(widget=forms.PasswordInput)
+    
+    # Confirmation password field
+    password_confirm = forms.CharField(
+        widget=forms.PasswordInput,
+        label="Confirm Password"
+    )
+    
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'password_confirm']
+    
+    def clean(self):
+        """Custom validation to check if passwords match"""
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+        password_confirm = cleaned_data.get('password_confirm')
+        
+        # Check if the passwords match
+        if password and password_confirm and password != password_confirm:
+            raise forms.ValidationError("Passwords do not match!")
+        
+        return cleaned_data
+
+
+class LoginForm(forms.Form):
+    """Form for user login"""
+    username = forms.CharField(max_length=150)
+    password = forms.CharField(widget=forms.PasswordInput)
+```
+
+### Code Example: Authentication Views (authApp/views.py)
+
+```python
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from .forms import RegisterForm, LoginForm
+
 def register_view(request):
+    """Handle user registration"""
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
+            # Extract cleaned data
             username = form.cleaned_data.get("username")
             password = form.cleaned_data.get("password")
-            user = User.objects.create_user(username=username, password=password)
+            
+            # Create new user with hashed password
+            user = User.objects.create_user(
+                username=username,
+                password=password
+            )
+            
+            # Automatically log in the new user
             login(request, user)
             return redirect('home')
     else:
         form = RegisterForm()
-    return render(request, 'register.html', {'form': form})
+    
+    return render(request, 'accounts/register.html', {'form': form})
 
+
+def login_view(request):
+    """Handle user login"""
+    error_message = None
+    next_url = request.GET.get('next', '')
+    
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+        next_url = request.POST.get('next') or 'home'
+        
+        if form.is_valid():
+            username = form.cleaned_data.get("username")
+            password = form.cleaned_data.get("password")
+            
+            # Authenticate user
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                # User credentials are valid
+                login(request, user)
+                return redirect(next_url)
+            else:
+                # Invalid credentials
+                error_message = "Invalid username or password"
+    else:
+        form = LoginForm()
+    
+    context = {
+        'form': form,
+        'error': error_message,
+        'next': next_url
+    }
+    return render(request, 'accounts/login.html', context)
+
+
+def logout_view(request):
+    """Handle user logout"""
+    if request.method == "POST":
+        logout(request)
+        return redirect('login')
+    else:
+        return redirect('home')
+
+
+# Protect view with @login_required decorator
 @login_required
 def home_view(request):
-    return render(request, 'home.html')
+    """Protected home page - user must be logged in"""
+    return render(request, 'auth1_app/home.html')
+
+
+# Alternative: Using class-based views with LoginRequiredMixin
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class ProtectedView(LoginRequiredMixin, View):
+    """Protected class-based view"""
+    
+    # Redirect to login if user not authenticated
+    login_url = 'login'
+    
+    def get(self, request):
+        return render(request, 'registration/protected.html')
+```
+
+### Authentication in Templates
+
+```html
+<!-- Check if user is authenticated -->
+{% if user.is_authenticated %}
+    <p>Welcome, {{ user.username }}!</p>
+    <form method="POST" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+{% else %}
+    <p>Please log in</p>
+    <a href="{% url 'login' %}">Login</a>
+    <a href="{% url 'register' %}">Register</a>
+{% endif %}
+```
+
+### URL Configuration (authApp/urls.py)
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('register/', views.register_view, name='register'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('home/', views.home_view, name='home'),
+]
+```
+
+### Settings Configuration for Authentication
+
+```python
+# settings.py
+
+# Login URL (where unauthenticated users are redirected)
+LOGIN_URL = 'login'
+
+# URL to redirect after successful login
+LOGIN_REDIRECT_URL = 'home'
+
+# URL to redirect after logout
+LOGOUT_REDIRECT_URL = 'login'
+
+# Password validation
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+```
+
+### User Permissions and Groups
+
+```python
+# Create a group in admin
+from django.contrib.auth.models import Group, Permission
+
+# Programmatically add user to group
+user = User.objects.get(username='john')
+group = Group.objects.get(name='moderators')
+user.groups.add(group)
+
+# Check if user has permission
+if user.has_perm('invApp.delete_product'):
+    # User can delete products
+    pass
+
+# Check if user is in group
+if user.groups.filter(name='moderators').exists():
+    # User is a moderator
+    pass
 ```
 
 ---
@@ -462,53 +1339,377 @@ FinalProject/
 │       └── migrations/  (Database migrations)
 ```
 
-### Key Models
+### Code Example: Product Model (invApp/models.py)
 
-#### Product Model
 ```python
+from django.db import models
+
 class Product(models.Model):
+    """Model representing an inventory product"""
+    
     product_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
-    sku = models.CharField(max_length=50, unique=True)
+    sku = models.CharField(max_length=50, unique=True)  # Unique SKU code
     price = models.FloatField()
-    quantity = models.IntegerField()
+    quantity = models.IntegerField()  # Items in stock
     supplier = models.CharField(max_length=100)
     
+    # Timestamp fields (optional but recommended)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    
     def __str__(self):
+        """String representation of product"""
         return self.name
+    
+    class Meta:
+        ordering = ['-updated_at']  # Most recently updated first
+        verbose_name_plural = "Products"
+    
+    def is_low_stock(self):
+        """Check if product is low in stock"""
+        return self.quantity < 10
 ```
 
-### Core Functionality
+### Code Example: Product Form (invApp/forms.py)
 
-1. **List Products:** Display all products in inventory with pagination
-2. **Add Product:** Form to add new products to inventory
-3. **Edit Product:** Update existing product information
-4. **Delete Product:** Remove products from inventory
-5. **Search:** Search products by name or SKU
-6. **User Dashboard:** Personal dashboard for logged-in users
+```python
+from django import forms
+from .models import Product
+
+class ProductForm(forms.ModelForm):
+    """Form for creating and updating products"""
+    
+    class Meta:
+        model = Product
+        fields = '__all__'
+        
+        # Custom labels for form fields
+        labels = {
+            'product_id': 'Product ID',
+            'name': 'Product Name',
+            'sku': 'SKU Code',
+            'price': 'Price ($)',
+            'quantity': 'Quantity in Stock',
+            'supplier': 'Supplier Name',
+        }
+        
+        # Customize form widgets with CSS classes
+        widgets = {
+            'product_id': forms.NumberInput(
+                attrs={
+                    'placeholder': 'Auto-generated',
+                    'class': 'form-control',
+                    'readonly': True
+                }
+            ),
+            'name': forms.TextInput(
+                attrs={
+                    'placeholder': 'e.g. Laptop, Mouse',
+                    'class': 'form-control'
+                }
+            ),
+            'sku': forms.TextInput(
+                attrs={
+                    'placeholder': 'e.g. SKU12345',
+                    'class': 'form-control'
+                }
+            ),
+            'price': forms.NumberInput(
+                attrs={
+                    'placeholder': 'e.g. 99.99',
+                    'class': 'form-control',
+                    'step': '0.01'
+                }
+            ),
+            'quantity': forms.NumberInput(
+                attrs={
+                    'placeholder': 'e.g. 50',
+                    'class': 'form-control'
+                }
+            ),
+            'supplier': forms.TextInput(
+                attrs={
+                    'placeholder': 'e.g. ABC Electronics',
+                    'class': 'form-control'
+                }
+            ),
+        }
+```
+
+### Code Example: CRUD Views (invApp/views.py)
+
+```python
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .forms import ProductForm
+from .models import Product
+
+# Home View
+def home_view(request):
+    """Display home page"""
+    return render(request, 'invApp/home.html')
+
+# CREATE - Add new product
+@login_required
+def product_create_view(request):
+    """Create a new product"""
+    form = ProductForm()
+    
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        if form.is_valid():
+            # Save product to database
+            form.save()
+            return redirect('product_list')
+    
+    context = {'form': form, 'title': 'Add Product'}
+    return render(request, 'invApp/product_form.html', context)
+
+# READ - List all products
+@login_required
+def product_list_view(request):
+    """Display list of all products"""
+    # Get search query from URL parameters
+    search_query = request.GET.get('search', '')
+    
+    # Get all products or filter by search
+    if search_query:
+        products = Product.objects.filter(
+            name__icontains=search_query
+        ) | Product.objects.filter(
+            sku__icontains=search_query
+        )
+    else:
+        products = Product.objects.all()
+    
+    context = {
+        'products': products,
+        'search_query': search_query,
+        'total_products': products.count()
+    }
+    return render(request, 'invApp/product_list.html', context)
+
+# READ - Get specific product details
+@login_required
+def product_detail_view(request, product_id):
+    """Display product details"""
+    product = get_object_or_404(Product, product_id=product_id)
+    context = {'product': product}
+    return render(request, 'invApp/product_detail.html', context)
+
+# UPDATE - Modify existing product
+@login_required
+def product_update_view(request, product_id):
+    """Update product information"""
+    product = get_object_or_404(Product, product_id=product_id)
+    form = ProductForm(instance=product)
+    
+    if request.method == "POST":
+        form = ProductForm(request.POST, instance=product)
+        if form.is_valid():
+            form.save()
+            return redirect('product_list')
+    
+    context = {'form': form, 'product': product, 'title': 'Edit Product'}
+    return render(request, 'invApp/product_form.html', context)
+
+# DELETE - Remove product from inventory
+@login_required
+def product_delete_view(request, product_id):
+    """Delete a product"""
+    product = get_object_or_404(Product, product_id=product_id)
+    
+    if request.method == 'POST':
+        product.delete()
+        return redirect('product_list')
+    
+    context = {'product': product}
+    return render(request, 'invApp/product_confirm_delete.html', context)
+```
+
+### Code Example: URL Routing (invApp/urls.py)
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # Home
+    path('', views.home_view, name="home"),
+    
+    # Create
+    path('create/', views.product_create_view, name="product_create"),
+    
+    # Read
+    path('list/', views.product_list_view, name="product_list"),
+    path('detail/<int:product_id>/', views.product_detail_view, name="product_detail"),
+    
+    # Update
+    path('update/<int:product_id>/', views.product_update_view, name="product_update"),
+    
+    # Delete
+    path('delete/<int:product_id>/', views.product_delete_view, name="product_delete"),
+]
+```
+
+### Template Example: Product List (invApp/templates/invApp/product_list.html)
+
+```html
+{% extends 'invApp/base.html' %}
+
+{% block title %}Product Inventory{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Product Inventory</h1>
+    
+    <!-- Search Bar -->
+    <form method="GET" class="mb-3">
+        <div class="input-group">
+            <input 
+                type="text" 
+                name="search" 
+                class="form-control" 
+                placeholder="Search by name or SKU..."
+                value="{{ search_query }}"
+            >
+            <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+    </form>
+    
+    <!-- Add Product Button -->
+    <a href="{% url 'product_create' %}" class="btn btn-success mb-3">
+        + Add New Product
+    </a>
+    
+    <!-- Products Table -->
+    {% if products %}
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Product Name</th>
+                    <th>SKU</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Supplier</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td>{{ product.product_id }}</td>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.sku }}</td>
+                        <td>${{ product.price|floatformat:2 }}</td>
+                        <td>
+                            {% if product.is_low_stock %}
+                                <span class="badge badge-warning">
+                                    {{ product.quantity }} (LOW)
+                                </span>
+                            {% else %}
+                                <span class="badge badge-success">
+                                    {{ product.quantity }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ product.supplier }}</td>
+                        <td>{{ product.updated_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            <!-- Edit Button -->
+                            <a href="{% url 'product_update' product.product_id %}" 
+                               class="btn btn-sm btn-info">
+                                Edit
+                            </a>
+                            
+                            <!-- Delete Button -->
+                            <a href="{% url 'product_delete' product.product_id %}" 
+                               class="btn btn-sm btn-danger">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Summary -->
+        <p><strong>Total Products:</strong> {{ total_products }}</p>
+    {% else %}
+        <div class="alert alert-info">
+            No products found. <a href="{% url 'product_create' %}">Add one now</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+```
 
 ### Running the Project
 
 ```bash
+# Navigate to project directory
 cd FinalProject/invProject
-python manage.py runserver
-```
 
-Visit `http://localhost:8000/` in your browser.
+# Install dependencies
+pipenv install
 
-### Admin Access
+# Activate virtual environment
+pipenv shell
 
-```bash
+# Run migrations
+python manage.py migrate
+
+# Create superuser for admin access
 python manage.py createsuperuser
+
+# Start development server
+python manage.py runserver
+
+# Visit the application
+# Home: http://localhost:8000/
+# Admin: http://localhost:8000/admin/
 ```
 
-Then visit `http://localhost:8000/admin/` with your superuser credentials.
+### Key Features Implemented
 
-### Technologies Used
+1. **CRUD Operations:** Complete Create, Read, Update, Delete functionality
+2. **Authentication:** User login required to access inventory
+3. **Search Functionality:** Search products by name or SKU
+4. **Data Validation:** Forms validate product data before saving
+5. **Template Inheritance:** Consistent UI across all pages
+6. **Admin Interface:** Full Django admin support
+7. **Error Handling:** Proper error messages and user feedback
+8. **Responsive Design:** Mobile-friendly interface
+
+### Database Schema
+
+```
+Product Table
+├── product_id (Primary Key, Auto-increment)
+├── name (String, Max 100 chars)
+├── sku (String, Unique, Max 50 chars)
+├── price (Float)
+├── quantity (Integer)
+├── supplier (String, Max 100 chars)
+├── created_at (DateTime, Auto-set)
+└── updated_at (DateTime, Auto-update)
+```
+
+### Technology Stack
 - **Framework:** Django 3.x/4.x
 - **Database:** SQLite3
 - **Frontend:** HTML5, CSS3, Bootstrap (optional)
 - **Python:** 3.8+
+
+### Security Features
+- CSRF token protection on all forms
+- Password hashing for user authentication
+- Login required decorators on protected views
+- SQL injection prevention through ORM
+- XSS protection in templates
 
 ---
 
